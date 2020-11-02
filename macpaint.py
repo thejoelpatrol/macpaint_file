@@ -42,7 +42,11 @@ class MacPaintFile:
         self.data = data
         decompressed_data = self._unpack_bits(self.data)
         self.scanlines = list(chunks(decompressed_data, self.WIDTH // 8))
+        if len(self.scanlines) > self.HEIGHT:
+            print("found {} junk scanlines at end of file, discarding".format(len(self.scanlines) - self.HEIGHT))
+            self.scanlines = self.scanlines[:self.HEIGHT]
         assert len(self.scanlines) == self.HEIGHT, "error: got {} scanlines, expected {}".format(len(self.scanlines), self.HEIGHT)
+        self._bitmap = None
 
     @classmethod
     def from_file(cls, path: str):
@@ -85,12 +89,11 @@ class MacPaintFile:
     def to_png(self, output_path: str):
         with open(output_path, 'wb') as f:
             w = png.Writer(self.WIDTH, self.HEIGHT, greyscale=True)
-            bitmap = self.bitmap
-            w.write(f, bitmap)
+            w.write(f, self.bitmap)
 
     def _generate_bitmap(self):
         bitmap = []
-        for i in range(self.HEIGHT):
+        for i in range(len(self.scanlines)):
             scanline = self.scanlines[i]
             bitmap_line = []
             for j in range(self.WIDTH // 8):
@@ -103,8 +106,7 @@ class MacPaintFile:
 
     @property
     def bitmap(self):
-        if not hasattr(self, "_bitmap"):
+        if self._bitmap is None:
             self._bitmap = self._generate_bitmap()
         return self._bitmap
-
 
