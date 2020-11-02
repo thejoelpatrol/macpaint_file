@@ -3,8 +3,14 @@ from collections.abc import Sequence
 from typing import List
 import png
 
+# https://web.archive.org/web/20080705155158/http://developer.apple.com/technotes/tn/tn1023.html
+# http://www.idea2ic.com/File_Formats/macpaint.pdf
+# http://www.weihenstephan.org/~michaste/pagetable/mac/Inside_Macintosh.pdf
+# https://en.wikipedia.org/wiki/PackBits
+
 def chunks(lst: Sequence, n: int):
     """Yield successive n-sized chunks from lst."""
+    # https://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
@@ -63,12 +69,10 @@ class MacPaintFile:
             header = scanline_data[i]
             if header == 128:
                 # ignored, next byte is another header
-                #print("(ignored) {}, {}".format(hex(i), hex(header)))
                 i += 1
             elif header > 128:
                 # twos complement -1 to -127
                 # next byte repeated n times
-                #print("(packed)  {}, {}".format(hex(i), hex(header)))
                 count = 256 - header + 1
                 _byte = scanline_data[i + 1]
                 decompressed = count * [_byte]
@@ -76,7 +80,6 @@ class MacPaintFile:
                 i += 2
             else:
                 # n bytes of literal uncompressed data
-                #print("(literal) {}, {}".format(hex(i), hex(header)))
                 count = header + 1
                 _bytes = scanline_data[i+1 : i + 1 + count]
                 result += list(_bytes)
