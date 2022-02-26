@@ -62,6 +62,10 @@ class MacPaintFile:
         data = filedata[Header.SIZE:]
         return cls(header, data)
 
+    def write_file(self, path: str):
+        # TODO see if we can write creator code/filetype if filesystem supports it
+        pass
+
     def _unpack_bits(self, scanline_data: bytes) -> bytearray:
         result = []
         i = 0
