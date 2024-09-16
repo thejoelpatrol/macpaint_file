@@ -1,12 +1,16 @@
 import argparse
 from macpaint import MacPaintFile
+from formats import PNGFile
 
 def main(args):
     if args.from_macpaint:
         macpaint_file = MacPaintFile.from_file(args.infile)
-        macpaint_file.to_png(args.outfile)
+        #macpaint_file.to_png(args.outfile)
+        PNGFile.write_image(args.outfile, macpaint_file)
     elif args.to_macpaint:
-        macpaint_file = MacPaintFile.from_png(args.infile)
+        #macpaint_file = MacPaintFile.from_png(args.infile)
+        png = PNGFile(args.infile)
+        macpaint_file = png.convert()
         macpaint_file.write_file(args.outfile)
     else:
         raise RuntimeError("must specify either --from-macpaint or --to-macpaint")
