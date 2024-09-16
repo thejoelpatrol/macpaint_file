@@ -171,35 +171,6 @@ class MacPaintFile:
             bits += packed_line
         return bits
 
-
-    def to_png(self, output_path: str):
-        with open(output_path, 'wb') as f:
-            w = png.Writer(self.WIDTH, self.HEIGHT, greyscale=True)
-            w.write(f, self.bitmap)
-
-    @classmethod
-    def from_png(cls, input_path: str) -> "MacPaintFile":
-        reader = png.Reader(filename=input_path)
-        width, height, rows, info = reader.read()
-        if not isinstance(rows, list):
-            rows = list(rows)
-        rows: List[List]
-        if height > cls.HEIGHT:
-            rows = rows[:cls.HEIGHT]
-        if height < cls.HEIGHT:
-            add_rows = cls.HEIGHT - height
-            for _ in range(add_rows):
-                rows.append([cls.WHITE] * cls.WIDTH)
-        if width > cls.WIDTH:
-            rows = [row[:cls.WIDTH] for row in rows]
-        if width < cls.WIDTH:
-            new_rows = list()
-            add_pixels = cls.WIDTH - width
-            for row in rows:
-                new_rows.append(row + [cls.WHITE] * add_pixels)
-            rows = new_rows
-        return cls.from_scanlines(rows)
-
     def _generate_bitmap(self):
         bitmap = []
         for i in range(len(self.scanlines)):
