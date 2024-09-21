@@ -21,16 +21,19 @@ def _pack_bits(line: bytes) -> bytes:
     when there are three or more consecutive equal bytes."
     -- http://www.weihenstephan.org/~michaste/pagetable/mac/Inside_Macintosh.pdf
     """
+    if len(line) > 127:
+        raise RuntimeError(f"scanline is too long: {len(line)}; can only compress 127 bytes at a time, MacPaint lines should be 72 bytes")
     packed = bytearray()
     i = 0
-    while i < len(line) - 3:
-        j = i
+    while i < len(line):
+        # precondition: i < len(line) - 2
         if line[i : i + 3] == bytearray([line[i]] * 3):
+            j = i
             # 3+ bytes the same, compress these
             while j < len(line) and line[j] == line[i] and j - i < 127:
                 j += 1
             count = j - i
-            # the sign bit of the header is used to indicated whether the byte is repeated or a literal string
+            # the sign bit of the header is used to indicate whether the byte is repeated or a literal string
             # when repeated, the count is the two's complement negative value of the header
             # this must have been an efficient use of 68000 instructions or something
             header = 256 - count + 1
@@ -39,9 +42,17 @@ def _pack_bits(line: bytes) -> bytes:
             packed.append(byte)
         else:
             # literal bytes
-            # find where the next 3+ byte compressible range is, stop there
+            # postcondition: j <= len(line) - 3 or  j == len(line}
             j = i + 1
+            while j < len(line):
+                end = min(j + 3, len(line))
+                if line[j : end] == bytearray([line[j]] * 3):
+                    break
+                j += 1
+
+            """
             if j + 3 < len(line):
+                # find where the next 3+ byte compressible range is, stop there
                 while j - i < 127 and line[j : j + 3] != bytearray([line[j]] * 3):
                     j += 1
                     if j + 3 > len(line):
@@ -49,8 +60,11 @@ def _pack_bits(line: bytes) -> bytes:
                         break
             else:
                 j = len(line)
+            """
+
+
             count = j - i
-            header = count - 1  # sign bit not set
+            header = count - 1  # literal bytes header is 1+n: https://en.wikipedia.org/wiki/PackBits
             literal_bytes = line[i : j]
             packed += struct.pack(">B", header) + literal_bytes
         i = j
@@ -103,6 +117,7 @@ class MacPaintFile:
         self.data = data
         decompressed_data = self._unpack_bits(self.data)
         self.scanlines = list(chunks(decompressed_data, self.WIDTH // 8))
+        #self._generate_bitmap()
         if len(self.scanlines) > self.HEIGHT:
             print("found {} junk(?) scanlines at end of file, discarding".format(len(self.scanlines) - self.HEIGHT))
             self.scanlines = self.scanlines[:self.HEIGHT]
@@ -155,6 +170,7 @@ class MacPaintFile:
 
     @classmethod
     def _gen_packed_data(cls, bitmap: List[List[int]]) -> bytes:
+        assert len(bitmap) == cls.HEIGHT, f"trying to pack {len(bitmap)} scanlines, expected {cls.HEIGHT}"
         bits = bytearray()
         for _, raw_line in enumerate(bitmap):
             i = 0
@@ -162,11 +178,13 @@ class MacPaintFile:
             while i < len(raw_line):
                 byte = 0
                 for j in range(8):
-                    if raw_line[i + j] == cls.BLACK:
+                    value = raw_line[i + j]
+                    assert value in (cls.BLACK, cls.WHITE), f"got bad value for a pixel color: {value}"
+                    if value == cls.BLACK:
                         byte |= 0x1 << (7 - j) # higher order bits come first left->right
                 i += 8
                 bit_line.append(byte)
-            assert len(bit_line) == cls.WIDTH / 8
+            assert len(bit_line) == cls.WIDTH / 8, f"error in condensing bytes into bits; line is only {len(bit_line)} bytes"
             packed_line = _pack_bits(bit_line)
             bits += packed_line
         return bits
