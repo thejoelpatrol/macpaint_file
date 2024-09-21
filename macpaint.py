@@ -49,20 +49,6 @@ def _pack_bits(line: bytes) -> bytes:
                 if line[j : end] == bytearray([line[j]] * 3):
                     break
                 j += 1
-
-            """
-            if j + 3 < len(line):
-                # find where the next 3+ byte compressible range is, stop there
-                while j - i < 127 and line[j : j + 3] != bytearray([line[j]] * 3):
-                    j += 1
-                    if j + 3 > len(line):
-                        j = len(line)
-                        break
-            else:
-                j = len(line)
-            """
-
-
             count = j - i
             header = count - 1  # literal bytes header is 1+n: https://en.wikipedia.org/wiki/PackBits
             literal_bytes = line[i : j]
