@@ -1,7 +1,9 @@
 import struct
 from collections.abc import Sequence
 from typing import List
+import sys
 import png
+import subprocess
 
 # https://web.archive.org/web/20080705155158/http://developer.apple.com/technotes/tn/tn1023.html
 # https://web.archive.org/web/20150424145627/http://www.idea2ic.com/File_Formats/macpaint.pdf
@@ -125,10 +127,16 @@ class MacPaintFile:
         return cls(header, packed_bits, bitmap)
 
     def write_file(self, path: str):
-        # TODO see if we can write creator code/filetype if filesystem supports it
-        # this seems unlikely via python...
         with open(path, 'wb') as f:
             f.write(self.header.pack() + self.data)
+
+        if sys.platform == "darwin":
+            PNTGMPNT = "50 4E 54 47 4D 50 4E 54 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
+            command = ["xattr", "-wx", "com.apple.FinderInfo", PNTGMPNT, path]
+            try:
+                subprocess.check_call(command)
+            except:
+                print(f"warning: could not set creator code/type code with xattr; MacPaint will not be able to open {path} unless you change the creator/type codes with ResEdit or xattr")
 
     def _unpack_bits(self, scanline_data: bytes) -> bytearray:
         result = []
