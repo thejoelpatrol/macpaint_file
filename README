@@ -1,5 +1,0 @@
-A MacPaint file format translator. Convert MacPaint PNTG files to PNG, and vice-versa.
-Dithering not supported yet, PNGs are converted to black/white.
-
-If you use this, please submit your MacPaint files to www.macpaint.org!
-
