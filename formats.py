@@ -128,9 +128,9 @@ class PNGFile(ImageConverter):
         if self.height > MacPaintFile.HEIGHT:
             rows = rows[:MacPaintFile.HEIGHT]
         if self.height < MacPaintFile.HEIGHT:
-            add_rows = MacPaintFile.HEIGHT - height
+            add_rows = MacPaintFile.HEIGHT - self.height
             for _ in range(add_rows):
-                rows.append([MacPaintFile.WHITE] * MacPaintFile.WIDTH)
+                rows.append([MacPaintFile.WHITE] * self.width)
         if self.width > MacPaintFile.WIDTH:
             rows = [row[:MacPaintFile.WIDTH] for row in rows]
         if self.width < MacPaintFile.WIDTH:
