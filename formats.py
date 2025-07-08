@@ -15,15 +15,29 @@ def chunks(lst: Sequence, n: int):
 
 def dither(grey_rows: List[bytes]) -> List[bytes]:
     """
-    TODO Atkinson dithering for greyscale image; for now only rounding grey to black/white
+    Atkinson dithering for greyscale image
+    https://beyondloom.com/blog/dither.html
     :param grey_rows: 0-255 values, one byte per pixel
     :return: 0 or 255 values only, one byte per pixel
     """
+    x_y_offsets = [(1,0), (2,0), (-1,1), (0,1), (1,1), (0,2)]
+    n_rows = len(grey_rows)
+    errors = list()
+    for _ in range(n_rows):
+        errors.append([0] * len(grey_rows[0]))
     dithered = list()
-    for row in grey_rows:
+    for y, row in enumerate(grey_rows):
         dithered_row = bytearray()
-        for b in row:
-            if b > 0x80:
+        for x, b in enumerate(row):
+            pix = b + errors[y][x]
+            col = 255 if pix > 0x80 else 0
+            err = (pix - col) / 8
+            for _x, _y in x_y_offsets:
+                try:
+                    errors[y + _y][x + _x] += err
+                except IndexError:
+                    continue
+            if pix > 0x80:
                 dithered_row.append(MacPaintFile.WHITE)
             else:
                 dithered_row.append(MacPaintFile.BLACK)
