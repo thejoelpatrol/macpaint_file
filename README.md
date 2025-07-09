@@ -1,6 +1,6 @@
 A MacPaint file format translator. Convert MacPaint PNTG files to PNG, and vice-versa. Uses [Atkinson dithering](https://beyondloom.com/blog/dither.html) for color and grayscale input PNGs.
 
-If you use this, please submit your MacPaint files to www.macpaint.org!
+If you use this to rescue old MacPaint images, please submit them to www.macpaint.org!
 
 ## Setup
 
