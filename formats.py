@@ -124,7 +124,7 @@ class PNGFile(ImageConverter):
         return need_dither
 
     def convert(self) -> MacPaintFile:
-        rows = self.rows
+        rows = [[b for b in row] for row in self.rows]
         if self.height > MacPaintFile.HEIGHT:
             rows = rows[:MacPaintFile.HEIGHT]
         if self.height < MacPaintFile.HEIGHT:
